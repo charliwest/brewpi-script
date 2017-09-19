@@ -38,6 +38,10 @@ import urllib
 from distutils.version import LooseVersion
 from serial import SerialException
 
+#Adding for iSpindel
+import PollForSG
+import thread
+
 # load non standard packages, exit when they are not installed
 try:
     import serial
@@ -429,7 +433,10 @@ prevTempJson = {
     "Log3Temp": None,
     "State": None,
     "BeerSet": 0,
-    "FridgeSet": 0}
+    "FridgeSet": 0,
+    "spinSG": 0,
+    "spinBatt": 0,
+    "spinTemp": 0}
 
 def renameTempKey(key):
     rename = {
@@ -443,7 +450,10 @@ def renameTempKey(key):
         "lt2": "Log2Temp",
         "lt3": "Log3Temp",
         "s": "State",
-        "t": "Time"}
+        "t": "Time",
+        "sg": "spinSG",
+        "st": "spinTemp",
+        "sb": "spinBatt"}
     return rename.get(key, key)
 
 while run:
@@ -743,6 +753,17 @@ while run:
                             for key in newData:
                                 prevTempJson[renameTempKey(key)] = newData[key]
 
+                            ##Retrieve the current hydrometer values spinTemp spinBatt spinSG from pollforsg
+                            ispindelreading = PollForSG.getValue()
+                            if ispindelreading is not None:
+                                prevTempJson['spinTemp'] = round(ispindelreading[3], 2)
+                                prevTempJson['spinBatt'] = round(ispindelreading[2], 2)
+                                prevTempJson['spinSG'] = ispindelreading[1]
+                            else:
+                                prevTempJson['spinTemp'] = None
+                                prevTempJson['spinBatt'] = None
+                                prevTempJson['spinSG'] = None
+
                             newRow = prevTempJson
                             # add to JSON file
                             brewpiJson.addRow(localJsonFileName, newRow)
@@ -762,7 +783,10 @@ while run:
                                             json.dumps(newRow['State']) + ';' +
                                             json.dumps(newRow['Log1Temp']) + ';' +
                                             json.dumps(newRow['Log2Temp']) + ';' +
-                                            json.dumps(newRow['Log3Temp']) + '\n')
+                                            json.dumps(newRow['Log3Temp']) + ';' +
+                                            json.dumps(newRow['spinTemp']) + ';' +
+                                            json.dumps(newRow['spinBatt']) + ';' +
+                                            json.dumps(newRow['spinSG']) + '\n')
                                 csvFile.write(lineToWrite)
                             except KeyError, e:
                                 logMessage("KeyError in line from controller: %s" % str(e))

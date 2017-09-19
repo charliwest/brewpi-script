@@ -31,6 +31,9 @@ jsonCols = ("\"cols\":[" +
 						"{\"type\":\"number\",\"id\":\"Log2Temp\",\"label\":\"Log2 temp.\"}," +
 						"{\"type\":\"number\",\"id\":\"Log3Temp\",\"label\":\"Log3 temp.\"}," +
             "{\"type\":\"number\",\"id\":\"State\",\"label\":\"State\"}" +
+            "{\"type\":\"number\",\"id\":\"spinSG\",\"label\":\"iSpindel SG\"}," +
+                        "{\"type\":\"number\",\"id\":\"spinTemp\",\"label\":\"iSpindel Temperature\"}," +
+                        "{\"type\":\"number\",\"id\":\"spinBatt\",\"label\":\"iSpindel Battery\"}" +
             "]")
 
 
@@ -107,11 +110,25 @@ def addRow(jsonFileName, row):
 	else:
 		jsonFile.write("{\"v\":" + str(row['Log3Temp']) + "},")
 
-
 	if row['State'] is None:
 		jsonFile.write("null")
 	else:
 		jsonFile.write("{\"v\":" + str(row['State']) + "}")
+
+        if row['spinSG'] is None:
+                jsonFile.write("null,")
+        else:
+                jsonFile.write("{\"v\":" + str(row['spinSG']) + "},")
+
+        if row['spinTemp'] is None:
+                jsonFile.write("null,")
+        else:
+                jsonFile.write("{\"v\":" + str(row['spinTemp']) + "},")
+
+        if row['spinBatt'] is None:
+                jsonFile.write("null")
+        else:
+                jsonFile.write("{\"v\":" + str(row['spinBatt']) + "}")
 
 	# rewrite end of json file
 	jsonFile.write("]}]}")
