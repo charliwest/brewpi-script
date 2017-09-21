@@ -428,15 +428,16 @@ prevTempJson = {
     "FridgeTemp": 0,
     "BeerAnn": None,
     "FridgeAnn": None,
+    "spinSG": 0,
+    "spinBatt": 0,
+    "spinTemp": 0,
     "Log1Temp": None,
     "Log2Temp": None,
     "Log3Temp": None,
     "State": None,
     "BeerSet": 0,
-    "FridgeSet": 0,
-    "spinSG": 0,
-    "spinBatt": 0,
-    "spinTemp": 0}
+    "FridgeSet": 0
+}
 
 def renameTempKey(key):
     rename = {
@@ -446,14 +447,15 @@ def renameTempKey(key):
         "ft": "FridgeTemp",
         "fs": "FridgeSet",
         "fa": "FridgeAnn",
+        "sg": "spinSG",
+        "st": "spinTemp",
+        "sb": "spinBatt"
         "lt1": "Log1Temp",
         "lt2": "Log2Temp",
         "lt3": "Log3Temp",
         "s": "State",
-        "t": "Time",
-        "sg": "spinSG",
-        "st": "spinTemp",
-        "sb": "spinBatt"}
+        "t": "Time"
+}
     return rename.get(key, key)
 
 while run:
@@ -780,13 +782,13 @@ while run:
                                             json.dumps(newRow['FridgeTemp']) + ';' +
                                             json.dumps(newRow['FridgeSet']) + ';' +
                                             json.dumps(newRow['FridgeAnn']) + ';' +
+                                            json.dumps(newRow['spinTemp']) + ';' +
+                                            json.dumps(newRow['spinBatt']) + ';' +
+                                            json.dumps(newRow['spinSG']) + ';' +                                               
                                             json.dumps(newRow['State']) + ';' +
                                             json.dumps(newRow['Log1Temp']) + ';' +
                                             json.dumps(newRow['Log2Temp']) + ';' +
-                                            json.dumps(newRow['Log3Temp']) + ';' +
-                                            json.dumps(newRow['spinTemp']) + ';' +
-                                            json.dumps(newRow['spinBatt']) + ';' +
-                                            json.dumps(newRow['spinSG']) + '\n')
+                                            json.dumps(newRow['Log3Temp']) + '\n')
                                 csvFile.write(lineToWrite)
                             except KeyError, e:
                                 logMessage("KeyError in line from controller: %s" % str(e))
