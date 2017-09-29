@@ -1,13 +1,14 @@
 #!/usr/bin/env python2.7
 
-# Generic TCP Server for iSpindel (https://github.com/universam1/iSpindel)
-# Version: 1.0.1
-# Now Supports Firmware 5.0.1
-# Pre-Configured for Ready-to-Use Raspbian Image
+# Version: 1.3.1
+# New: Forward data to another instance of this script or any other JSON recipient
+# New: Support changes in firmware >= 5.4.0 (ID now transmitted as Integer)
 #
-# Receives iSpindel data as JSON via TCP socket and writes it to a CSV file, Database and/or Ubidots
-# This is my first Python script ever, so please bear with me for now.
-# Stephan Schreiber <stephan@sschreiber.de>, 2017-03-15
+# Generic TCP Server for iSpindel (https://github.com/universam1/iSpindel)
+# Receives iSpindel data as JSON via TCP socket and writes it to a CSV file, Database and/or forwards it
+#
+# Stephan Schreiber <stephan@sschreiber.de>, 2017-02-02 - 2017-08-31
+#
 
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 from datetime import datetime
@@ -17,31 +18,38 @@ import json
 # CONFIG Start
 
 # General
-DEBUG = 0                               # Set to 1 to enable debug output on console
-PORT = 9501                             # TCP Port to listen to
+DEBUG = 1                               # Set to 1 to enable debug output on console (usually devs only)
+PORT = 9501                             # TCP Port to listen to (to be used in iSpindle config as well)
 HOST = '0.0.0.0'                        # Allowed IP range. Leave at 0.0.0.0 to allow connections from anywhere
 CELSIUS = 1                             # Set to 1 to log temperature in Celcius
 
 # CSV
-CSV = 0                                 # Set to 1 if you want CSV (text file) output
+CSV = 1                                 # Set to 1 if you want CSV (text file) output
 OUTPATH = '/home/brewpi/iSpindel/'      # CSV output file path; filename will be name_id.csv
-DELIMITER = ','                         # CSV delimiter (normally use ; for Excel)
+DELIMITER = ';'                         # CSV delimiter (normally use ; for Excel)
 NEWLINE='\n'                          # newline (\r\n for windows clients)
-DATETIME = 1                            # Leave this at 1 to include Excel compatible timestamp in CSV
+DATETIME = 0                            # Leave this at 1 to include Excel compatible timestamp in CSV
 
 # Feed to BrewPI
 BPI = 1                                 # Set to 1 if you want CSV (text file) output
-OUTPATHPI = '/var/www/html/data/iSpindel/'              # CSV output file path; filename will be name_id.csv
+OUTPATHPI = '/var/www/html/data/iSpindel/'  # CSV output file path; filename will be name_id.csv
 DELIMITER = ','                        # CSV delimiter (normally use ; for Excel)
 DATETIMEPI = 0
 NEWLINE='\n'                          # newline (\r\n for windows clients)
 
-# Ubidots Forwarding (using existing account)
-UBIDOTS = 1                                     # change to 1 to enable output to ubidots and enter your token below
-UBI_TOKEN = 'tokentokentokentokentoken'    # ubidots token (get this by registering with ubidots.com and then enter it here)
+# Ubidots (using existing account)
+UBIDOTS = 1                                     # 1 to enable output to ubidots
+UBI_TOKEN = 'A1E-rjIi3rwG679NqABeaV6ki0WQSEZXxa'    # ubidots token, see manual or ubidots.com
+
+# Forward to public server or other relay (i.e. another instance of this script)
+FORWARD = 0
+# FORWARDADDR = 'ispindle.de'
+# FORWARDPORT = 9501
+FORWARDADDR = '192.168.2.21'
+FORWARDPORT = 9501
 
 # ADVANCED
-ENABLE_ADDCOLS = 0                              # Enable dynamic columns (configure pre-defined in lines 128-129)
+ENABLE_ADDCOLS = 0                              # Enable dynamic columns (do not use this unless you're a developer)
 
 # CONFIG End
 
@@ -50,17 +58,18 @@ NAK = chr(21)           # ASCII NAK (Not Acknowledged)
 BUFF = 1024             # Buffer Size (greatly exaggerated for now)
 
 def dbgprint(s):
-    if DEBUG == 1: print(s)
+    if DEBUG == 1: print(str(s))
 
 def handler(clientsock,addr):
     inpstr = ''
-    success = False
+    success = 0
     spindle_name = ''
     spindle_id = ''
     angle = 0.0
     temperature = 0.0
     battery = 0.0
     gravity = 0.0
+    user_token = ''
     while 1:
         data = clientsock.recv(BUFF)
         if not data: break  # client closed connection
@@ -89,16 +98,22 @@ def handler(clientsock,addr):
                 try:
                    gravity = jinput['gravity']
                 except:
-                   # probably using old firmware < 5.x
-                   gravity = 0
+                   # older firmwares < 5.0.1 are not transmitting this parameter
+                   gravity = 0.0
+                try:
+                    # get user token for connection to ispindle.de public server
+                    user_token = jinput['token']
+                except:
+                    # older firmwares < 5.         4 or field not filled in
+                    user_token = ''
                 # looks like everything went well :)
                 clientsock.send(ACK)
-                success = True
-                dbgprint(repr(addr) + ' ' + spindle_name + ' (ID:' + spindle_id + ') : Data received OK.')
+                dbgprint(repr(addr) + ' ' + spindle_name + ' (ID:' + str(spindle_id) + ') : Data received OK.')
+                success = 1
                 break # close connection
         except Exception as e:
             # something went wrong
-            # traceback.print_exc() # too verbose, so let's do this instead:
+            # traceback.print_exc() # this would be too verbose, so let's do this instead:
             dbgprint(repr(addr) + ' Error: ' + str(e))
             clientsock.send(NAK)
             dbgprint(repr(addr) + ' NAK sent.')
@@ -106,25 +121,25 @@ def handler(clientsock,addr):
     clientsock.close()
     dbgprint(repr(addr) + " - closed connection") #log on console
 
-    if success :
+    if success == 1:
         # We have the complete spindle data now, so let's make it available
         if CSV == 1:
-            #dbgprint(repr(addr) + ' - writing CSV')
+            dbgprint(repr(addr) + ' - writing CSV')
             try:
-                filename = OUTPATH + spindle_name + '_' + spindle_id + '.csv'
+                filename = OUTPATH + spindle_name + str(spindle_id) + '.csv'
                 with open(filename, 'a') as csv_file:
-                        # a - append
                     # this would sort output. But we do not want that...
                     # import csv
                     # csvw = csv.writer(csv_file, delimiter=DELIMITER)
                     # csvw.writerow(jinput.values())
                     outstr = ''
-                    outstr += spindle_name + DELIMITER
-                    outstr += spindle_id + DELIMITER
+                    outstr += str(spindle_name) + DELIMITER
+                    outstr += str(spindle_id) + DELIMITER
                     outstr += str(angle) + DELIMITER
                     outstr += str(temperature) + DELIMITER
                     outstr += str(battery) + DELIMITER
-                    outstr += str(gravity)
+                    outstr += str(gravity) + DELIMITER
+                    outstr += user_token
                     if DATETIME == 1:
                         cdt = datetime.now()
                         outstr += DELIMITER + cdt.strftime('%x %X')
@@ -134,9 +149,8 @@ def handler(clientsock,addr):
             except Exception as e:
                 dbgprint(repr(addr) + ' CSV Error: ' + str(e))
 
-
         if BPI == 1:
-            #dbgprint(repr(addr) + ' - writing CSV')
+            dbgprint(repr(addr) + ' - writing CSV')
             try:
                 filenamepi = OUTPATHPI +  'SpinData.csv'
                 with open(filenamepi, 'w') as csv_file_bpi:
@@ -148,8 +162,8 @@ def handler(clientsock,addr):
                     outstr = ''
                     if DATETIMEPI == 1:
                         cdt = datetime.now()
-                        outstr +=  cdt.strftime('%x %X')
-                    outstr += DELIMITER + str(gravity) + DELIMITER
+                        outstr +=  cdt.strftime('%x %X') + DELIMITER
+                    outstr += str(gravity) + DELIMITER
                     outstr += str(battery) + DELIMITER
                     outstr += str(temperature)
                     outstr += NEWLINE
@@ -179,6 +193,35 @@ def handler(clientsock,addr):
             except Exception as e:
                 dbgprint(repr(addr) + ' Ubidots Error: ' + str(e))
 
+        if FORWARD == 1:
+            try:
+                dbgprint(repr(addr) + ' - forwarding to ' + FORWARDADDR)
+                outdata = {
+                    'name' : spindle_name,
+                    'ID' : spindle_id,
+                    'angle' : angle,
+                    'temperature' : temperature,
+                    'battery' : battery,
+                    'gravity' : gravity,
+                    'token' : user_token
+                }
+                out = json.dumps(outdata)
+                dbgprint(repr(addr) + ' - sending: ' + out)
+                s = socket(AF_INET, SOCK_STREAM)
+                s.connect((FORWARDADDR, FORWARDPORT))
+                s.send(out)
+                rcv = s.recv(BUFF)
+                s.close()
+                if rcv[0] == ACK :
+                    dbgprint(repr(addr) + ' - received ACK - OK!')
+                elif rcv[0] == NAK :
+                    dbgprint(repr(addr) + ' - received NAK - Not OK...')
+                else:
+                    dbgprint(repr(addr) + ' - received: ' + rcv)
+
+            except Exception as e:
+                dbgprint(repr(addr) + ' Error while forwarding to ' + FORWARDADDR + ': ' + str(e))
+
 
 def main():
     ADDR = (HOST, PORT)
@@ -194,3 +237,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
