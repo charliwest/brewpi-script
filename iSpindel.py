@@ -26,7 +26,7 @@ CELSIUS = 1                             # Set to 1 to log temperature in Celcius
 CSV = 0                                 # Set to 1 if you want CSV (text file) output
 OUTPATH = '/home/brewpi/iSpindel/'      # CSV output file path; filename will be name_id.csv
 DELIMITER = ','                         # CSV delimiter (normally use ; for Excel)
-NEWLINE='\r\n'                          # newline (\r\n for windows clients)
+NEWLINE='\n'                          # newline (\r\n for windows clients)
 DATETIME = 1                            # Leave this at 1 to include Excel compatible timestamp in CSV
 
 # Feed to BrewPI
@@ -34,7 +34,7 @@ BPI = 1                                 # Set to 1 if you want CSV (text file) o
 OUTPATHPI = '/var/www/html/data/iSpindel/'              # CSV output file path; filename will be name_id.csv
 DELIMITER = ','                        # CSV delimiter (normally use ; for Excel)
 DATETIMEPI = 0
-NEWLINE='\r\n'                          # newline (\r\n for windows clients)
+NEWLINE='\n'                          # newline (\r\n for windows clients)
 
 # Ubidots Forwarding (using existing account)
 UBIDOTS = 1                                     # change to 1 to enable output to ubidots and enter your token below
@@ -109,7 +109,7 @@ def handler(clientsock,addr):
     if success :
         # We have the complete spindle data now, so let's make it available
         if CSV == 1:
-            dbgprint(repr(addr) + ' - writing CSV')
+            #dbgprint(repr(addr) + ' - writing CSV')
             try:
                 filename = OUTPATH + spindle_name + '_' + spindle_id + '.csv'
                 with open(filename, 'a') as csv_file:
@@ -136,7 +136,7 @@ def handler(clientsock,addr):
 
 
         if BPI == 1:
-            dbgprint(repr(addr) + ' - writing CSV')
+            #dbgprint(repr(addr) + ' - writing CSV')
             try:
                 filenamepi = OUTPATHPI +  'SpinData.csv'
                 with open(filenamepi, 'w') as csv_file_bpi:
