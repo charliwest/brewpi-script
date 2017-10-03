@@ -758,7 +758,7 @@ while run:
                             ##Retrieve the current hydrometer values spinTemp spinBatt spinSG from pollforsg
                             ispindelreading = PollForSG.getValue()
                             if ispindelreading is not None:
-                                prevTempJson['spinTemp'] = round(ispindelreading[3], 2)
+                                prevTempJson['spinTemp'] = round(ispindelreading[2], 2)
                                 prevTempJson['spinBatt'] = round(ispindelreading[2], 2)
                                 prevTempJson['spinSG'] = ispindelreading[1]
                             else:
