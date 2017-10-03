@@ -449,7 +449,7 @@ def renameTempKey(key):
         "fa": "FridgeAnn",
         "sg": "spinSG",
         "st": "spinTemp",
-        "sb": "spinBatt"
+        "sb": "spinBatt",
         "lt1": "Log1Temp",
         "lt2": "Log2Temp",
         "lt3": "Log3Temp",
