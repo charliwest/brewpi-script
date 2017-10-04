@@ -38,8 +38,8 @@ DATETIMEPI = 0
 NEWLINE='\n'                          # newline (\r\n for windows clients)
 
 # Ubidots (using existing account)
-UBIDOTS = 1                                     # 1 to enable output to ubidots
-UBI_TOKEN = 'A1E-rjIi3rwG679NqABeaV6ki0WQSEZXxa'    # ubidots token, see manual or ubidots.com
+UBIDOTS = 0                                     # 1 to enable output to ubidots
+UBI_TOKEN = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'    # ubidots token, see manual or ubidots.com
 
 # Forward to public server or other relay (i.e. another instance of this script)
 FORWARD = 0

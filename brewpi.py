@@ -449,7 +449,7 @@ def renameTempKey(key):
         "fa": "FridgeAnn",
         "sg": "spinSG",
         "st": "spinTemp",
-        "sb": "spinBatt"
+        "sb": "spinBatt",
         "lt1": "Log1Temp",
         "lt2": "Log2Temp",
         "lt3": "Log3Temp",
@@ -758,9 +758,9 @@ while run:
                             ##Retrieve the current hydrometer values spinTemp spinBatt spinSG from pollforsg
                             ispindelreading = PollForSG.getValue()
                             if ispindelreading is not None:
-                                prevTempJson['spinTemp'] = round(ispindelreading[3], 2)
-                                prevTempJson['spinBatt'] = round(ispindelreading[2], 2)
-                                prevTempJson['spinSG'] = ispindelreading[1]
+                                prevTempJson['spinTemp'] = round(ispindelreading[2], 2)
+                                prevTempJson['spinBatt'] = round(ispindelreading[1], 2)
+                                prevTempJson['spinSG'] = ispindelreading[0]
                             else:
                                 prevTempJson['spinTemp'] = None
                                 prevTempJson['spinBatt'] = None

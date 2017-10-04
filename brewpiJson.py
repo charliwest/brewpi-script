@@ -29,7 +29,7 @@ jsonCols = ("\"cols\":[" +
             "{\"type\":\"string\",\"id\":\"FridgeAnn\",\"label\":\"Fridge Annotate\"}," +
             "{\"type\":\"number\",\"id\":\"spinSG\",\"label\":\"iSpindel SG\"}," +
             "{\"type\":\"number\",\"id\":\"spinTemp\",\"label\":\"iSpindel Temperature\"}," +
-            "{\"type\":\"number\",\"id\":\"spinBatt\",\"label\":\"iSpindel Battery\"}" +
+            "{\"type\":\"number\",\"id\":\"spinBatt\",\"label\":\"iSpindel Battery\"}," +
 	    "{\"type\":\"number\",\"id\":\"Log1Temp\",\"label\":\"Log1 temp.\"}," +
 						"{\"type\":\"number\",\"id\":\"Log2Temp\",\"label\":\"Log2 temp.\"}," +
 						"{\"type\":\"number\",\"id\":\"Log3Temp\",\"label\":\"Log3 temp.\"}," +
@@ -107,9 +107,9 @@ def addRow(jsonFileName, row):
                 jsonFile.write("{\"v\":" + str(row['spinTemp']) + "},")
 
         if row['spinBatt'] is None:
-                jsonFile.write("null")
+                jsonFile.write("null,")
         else:
-                jsonFile.write("{\"v\":" + str(row['spinBatt']) + "}")
+                jsonFile.write("{\"v\":" + str(row['spinBatt']) + "},")
 
 	if row['Log1Temp'] is None:
 		jsonFile.write("null,")
